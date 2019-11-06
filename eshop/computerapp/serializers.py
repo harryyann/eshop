@@ -90,14 +90,11 @@ class ProductRetrieveSerializer(serializers.ModelSerializer):
 
 
 #订单模块
-
-
-
 class OrderListSerializer(serializers.ModelSerializer):
     product = ProductListSerializer()
     address = DeliveryAddressSerilizer()
     class Meta:
-        model=Order
+        model=Order 
         fields=('id','status','user','product','price','quantity','remark','address','created','updated',)
 
 

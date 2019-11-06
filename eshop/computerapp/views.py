@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.pagination import LimitOffsetPagination
-from .models import Product, UserProfile, DeliveryAddress
+from .models import Product, UserProfile, DeliveryAddress, Order
 from .serializers import ProductListSerializer, ProductRetrieveSerializer, UserInfoSerializer, UserProfileSerializer, UserSerializer, DeliveryAddressSerilizer
 from rest_framework.exceptions import NotFound
 # Create your views here.
@@ -136,4 +136,55 @@ class DeliveryAddressRUDView(generics.RetrieveUpdateDestroyAPIView):
         except Exception as e:
             raise NotFound('not found')
         return obj
+
+#订单模块
+class CartListView(generics.ListAPIView):
+    '''购物车列表'''
+    serializer_class=OrderListSerializer
+    permissin_classes=(permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+       user=self.request.user
+       queryset=Order.objects.filter(user=user,status='0')
+       return queryset
+
+
+class OrderListView(generics.ListAPIView):
+    '''订单列表'''
+    serializer_class=OrderListSerializer
+    permissin_classes=(permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+       user=self.request.user
+       queryset=Order.objects.filter(user=user,status__in=['1','2','3','4'])
+       return queryset
+
+
+class OrderCreateView(generics.CreateAPIView):
+    '''创建订单'''
+    queryset = Order.objects.all()
+    serializer_class = OrderCreateSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        product=serializer.validated_data.get('product')
+        serializer.save(user=user,price=product.price,address=user.profile_of.delivery_address,status='0',)
+
+        logging.info('user %d cart changed,product %d related.Time is %s.', user.id, product.id, str(datetime.datetime.now()))
+
+
+# class OrderRUDView(generics.RetrieveUpdateDestroyAPIView):
+#     '''Order'''
+#     serializer_class = OrderRUDSerializer
+#     permission_classes = (permissions.IsAuthenticated,)
+#
+#     def get_object(self):
+#         user = self.request.user
+#         obj= Order.objects.get(user=user,id=self.kwargs['pk'])
+#         return obj
+#
+#     def perform_update(self, serializer):
+#         user = self.request.user
+#         serializer.save(user=user,sttus='1')
 
